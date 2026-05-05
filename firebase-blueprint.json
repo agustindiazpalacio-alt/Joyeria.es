@@ -1,0 +1,152 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A jewelry product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "cost": { "type": "number" },
+        "price": { "type": "number" },
+        "stock": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "name", "category", "cost", "price", "stock", "isActive", "userId"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A product sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "quantity": { "type": "number" },
+        "total": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "client": { "type": "string" },
+        "date": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "productId", "quantity", "total", "paymentMethod", "date", "userId"]
+    },
+    "Provider": {
+      "title": "Provider",
+      "description": "A supplier",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "zone": { "type": "string" },
+        "type": { "type": "string" },
+        "contact": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "minPurchase": { "type": "number" },
+        "rating": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "name", "zone", "type", "contact", "minPurchase", "rating", "userId"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A checklist task",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "category": { "type": "string" },
+        "status": { "type": "string" },
+        "frequency": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "title", "completed", "category", "userId"]
+    },
+    "StockChange": {
+      "title": "StockChange",
+      "description": "A record of stock change",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "delta": { "type": "number" },
+        "date": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "productId", "delta", "date", "userId"]
+    },
+    "AppEvent": {
+      "title": "AppEvent",
+      "description": "A calendar event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "date", "title", "type", "userId"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "A chat session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "messages": { "type": "array" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "date", "title", "messages", "userId"]
+    },
+    "AppState": {
+      "title": "AppState",
+      "description": "The big state object",
+      "type": "object",
+      "properties": {
+        "startDate": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["userId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "User's products"
+    },
+    "users/{userId}/sales/{saleId}": {
+      "schema": { "$ref": "#/entities/Sale" },
+      "description": "User's sales"
+    },
+    "users/{userId}/providers/{providerId}": {
+      "schema": { "$ref": "#/entities/Provider" },
+      "description": "User's providers"
+    },
+    "users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "User's tasks"
+    },
+    "users/{userId}/stockHistory/{changeId}": {
+      "schema": { "$ref": "#/entities/StockChange" },
+      "description": "User's stock history"
+    },
+    "users/{userId}/events/{eventId}": {
+      "schema": { "$ref": "#/entities/AppEvent" },
+      "description": "User's events"
+    },
+    "users/{userId}/chatSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/ChatSession" },
+      "description": "User's chat sessions"
+    },
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/AppState" },
+      "description": "User's base app state (start date)"
+    }
+  }
+}

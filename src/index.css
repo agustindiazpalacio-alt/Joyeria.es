@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #B8860B;
+  --color-gold-hover: #996515;
+  --color-gold-light: #F3E5AB;
+
+  /* Inverted elegant light theme */
+  --color-brand-950: #F9F8F6; /* App Background */
+  --color-brand-900: #FFFFFF; /* Cards */
+  --color-brand-800: #E6E2DB; /* Borders */
+  --color-brand-700: #CCC6BD;
+  --color-brand-600: #AFA79C;
+  --color-brand-500: #888075; /* Muted text */
+  --color-brand-400: #5C564D; /* Normal text */
+  --color-brand-300: #3D3832; /* Strong text */
+  --color-brand-200: #292420;
+  --color-brand-100: #14120F; /* Headings */
+  --color-brand-50:  #000000;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+
+body {
+  background-color: var(--color-brand-950);
+  color: var(--color-brand-300);
+  overscroll-behavior-y: none;
+}
+
+/* Premium Styling Additions */
+.premium-card {
+  @apply bg-[var(--color-brand-900)] border border-[var(--color-brand-800)] rounded-2xl shadow-sm;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+.premium-card:hover {
+  border-color: rgba(184, 134, 11, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.golden-text-gradient {
+  background: linear-gradient(to right, var(--color-gold), #8B6508);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.golden-button {
+  background: linear-gradient(45deg, var(--color-gold), #DAA520);
+  @apply text-white font-bold shadow-md transition-all duration-300 border border-transparent;
+}
+
+.golden-button:hover {
+  background: linear-gradient(45deg, #DAA520, var(--color-gold-hover));
+  @apply text-white;
+  box-shadow: 0 4px 15px rgba(184, 134, 11, 0.2);
+  transform: translateY(-2px);
+}
+
+.premium-input {
+  @apply bg-[var(--color-brand-950)] border border-[var(--color-brand-800)] rounded-xl focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)] transition-all text-sm text-[var(--color-brand-100)] placeholder-[var(--color-brand-500)];
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-brand-950); 
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-700); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-500); 
+}
+
+/* Base formatting for markdown */
+.prose-invert h1, .prose-invert h2, .prose-invert h3 {
+  @apply text-[var(--color-gold)] font-serif mt-2;
+}
+.prose-invert p {
+  @apply text-[var(--color-brand-400)];
+}
+.prose-invert ul, .prose-invert ol {
+  @apply pl-5 my-2;
+}
+.prose-invert li {
+  @apply text-[var(--color-brand-400)] mb-1;
+}
+.prose-invert strong {
+  @apply text-[var(--color-brand-100)];
+}
+
+/* Premium Tables */
+table {
+  @apply w-full text-sm text-left text-[var(--color-brand-300)];
+}
+
+thead {
+  @apply text-[10px] text-[var(--color-brand-500)] font-bold uppercase tracking-widest bg-[var(--color-brand-950)] border-b border-[var(--color-brand-800)];
+}
+
+th {
+  @apply px-4 py-3;
+}
+
+td {
+  @apply px-4 py-3 border-b border-[var(--color-brand-800)]/50;
+}
+
+tbody tr {
+  @apply hover:bg-[var(--color-brand-950)]/50 transition-colors;
+}
+
+.badge-success {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm px-2 py-1 rounded-md text-[11px] font-bold tracking-wider;
+}
+
+.badge-warning {
+  @apply bg-amber-50 text-amber-700 border border-amber-200 shadow-sm px-2 py-1 rounded-md text-[11px] font-bold tracking-wider;
+}
+
+.badge-danger {
+  @apply bg-red-50 text-red-700 border border-red-200 shadow-sm px-2 py-1 rounded-md text-[11px] font-bold tracking-wider;
+}
+

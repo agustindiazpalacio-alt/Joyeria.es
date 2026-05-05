@@ -1,0 +1,205 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    // Path Variable Hardening (ID Guard)
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    // Since this is a personal DB, no admins needed
+
+    // Base Validation Helpers
+    function checkKeys(data, requiredKeys) {
+      return data.keys().hasAll(requiredKeys) && data.keys().size() == requiredKeys.size();
+    }
+
+    function isValidProduct(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.name is string && data.name.size() <= 200
+          && data.category is string && data.category.size() <= 100
+          && data.cost is number
+          && data.price is number
+          && data.stock is number
+          && data.isActive is bool
+          && data.userId == request.auth.uid;
+    }
+    
+    function isValidSale(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.productId is string && data.productId.size() <= 128
+          && data.quantity is number
+          && data.total is number /* cost might be decimal, number allows it */
+          && data.paymentMethod is string && data.paymentMethod.size() <= 100
+          && data.client is string && data.client.size() <= 200
+          && data.date is string && data.date.size() <= 50
+          && data.userId == request.auth.uid;
+    }
+
+    function isValidProvider(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.name is string && data.name.size() <= 200
+          && data.zone is string && data.zone.size() <= 100
+          && data.type is string && data.type.size() <= 100
+          && data.contact is string && data.contact.size() <= 200
+          && (data.get('phone', '') is string && data.get('phone', '').size() <= 100)
+          && (data.get('email', '') is string && data.get('email', '').size() <= 200)
+          && data.minPurchase is number
+          && data.rating is number
+          && data.userId == request.auth.uid;
+    }
+
+    function isValidTask(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.title is string && data.title.size() <= 300
+          && data.completed is bool
+          && data.category is string && data.category.size() <= 100
+          && (data.get('status', '') is string && data.get('status', '').size() <= 100)
+          && (data.get('frequency', '') is string && data.get('frequency', '').size() <= 100)
+          && data.userId == request.auth.uid;
+    }
+
+    function isValidStockChange(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.productId is string && data.productId.size() <= 128
+          && data.delta is number
+          && data.date is string && data.date.size() <= 50
+          && data.userId == request.auth.uid;
+    }
+
+    function isValidAppEvent(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.date is string && data.date.size() <= 50
+          && data.title is string && data.title.size() <= 200
+          && data.type is string && data.type.size() <= 100
+          && data.userId == request.auth.uid;
+    }
+
+    // Note: ChatSession might have a list 'messages'
+    function isValidChatSession(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.date is string && data.date.size() <= 50
+          && data.title is string && data.title.size() <= 200
+          && data.userId == request.auth.uid
+          && data.messages is list
+          && data.messages.size() <= 300; // max bounded limits
+    }
+
+    // AppState object
+    function isValidAppState(data) {
+      return data.startDate is string && data.startDate.size() <= 50
+          && data.userId == request.auth.uid;
+    }
+
+    // Multi-tenant isolation: Users can only access their own user directory
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      // Allow create with strict key size
+      allow create: if isSignedIn() && request.auth.uid == userId
+                    && checkKeys(incoming(), ['startDate', 'userId'])
+                    && isValidAppState(incoming());
+      
+      // We allow simple update
+      allow update: if isSignedIn() && request.auth.uid == userId
+                    && isValidAppState(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['startDate']);
+
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+
+      match /products/{productId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(productId)
+                      && checkKeys(incoming(), ['id', 'name', 'category', 'cost', 'price', 'stock', 'isActive', 'userId'])
+                      && isValidProduct(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(productId)
+                      && isValidProduct(incoming())
+                      && incoming().userId == existing().userId
+                      // can update everything except userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'cost', 'price', 'stock', 'isActive']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(productId);
+      }
+
+      match /sales/{saleId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(saleId)
+                      && checkKeys(incoming(), ['id', 'productId', 'quantity', 'total', 'paymentMethod', 'client', 'date', 'userId'])
+                      && isValidSale(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(saleId)
+                      && isValidSale(incoming())
+                      && incoming().userId == existing().userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['productId', 'quantity', 'total', 'paymentMethod', 'client', 'date']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(saleId);
+      }
+
+      match /providers/{providerId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(providerId)
+                      && (incoming().keys().hasAll(['id', 'name', 'zone', 'type', 'contact', 'minPurchase', 'rating', 'userId']))
+                      && isValidProvider(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(providerId)
+                      && isValidProvider(incoming())
+                      && incoming().userId == existing().userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'zone', 'type', 'contact', 'phone', 'email', 'minPurchase', 'rating']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(providerId);
+      }
+
+      match /tasks/{taskId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(taskId)
+                      && incoming().keys().hasAll(['id', 'title', 'completed', 'category', 'userId'])
+                      && isValidTask(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(taskId)
+                      && isValidTask(incoming())
+                      && incoming().userId == existing().userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'completed', 'category', 'status', 'frequency']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(taskId);
+      }
+
+      match /stockHistory/{changeId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(changeId)
+                      && checkKeys(incoming(), ['id', 'productId', 'delta', 'date', 'userId'])
+                      && isValidStockChange(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(changeId)
+                      && isValidStockChange(incoming())
+                      && incoming().userId == existing().userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['productId', 'delta', 'date']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(changeId);
+      }
+
+      match /events/{eventId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(eventId)
+                      && checkKeys(incoming(), ['id', 'date', 'title', 'type', 'userId'])
+                      && isValidAppEvent(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(eventId)
+                      && isValidAppEvent(incoming())
+                      && incoming().userId == existing().userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['date', 'title', 'type']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(eventId);
+      }
+
+      match /chatSessions/{sessionId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(sessionId)
+                      && checkKeys(incoming(), ['id', 'date', 'title', 'messages', 'userId'])
+                      && isValidChatSession(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(sessionId)
+                      && isValidChatSession(incoming())
+                      && incoming().userId == existing().userId
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['date', 'title', 'messages']);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(sessionId);
+      }
+    }
+  }
+}
